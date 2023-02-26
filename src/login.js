@@ -332,7 +332,7 @@ class LoginPopupSelf extends Component {
                   ref={this.ref.username}
                   type="email"
                   autoFocus={true}
-                  defaultValue="@mails.tsinghua.edu.cn"
+                  placeholder="@清华或北大邮箱"
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       this.next_step();
@@ -441,6 +441,7 @@ class LoginPopupSelf extends Component {
               <>
                 <p>
                   <b>输入验证码 {process.env.REACT_APP_TITLE}</b>
+                  <p>加载中……</p>
                 </p>
                 <RecaptchaV2Popup
                   callback={() => {

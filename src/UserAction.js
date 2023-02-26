@@ -246,7 +246,7 @@ export class LoginForm extends Component {
                       <p>
                         <small>
                           {process.env.REACT_APP_TITLE}
-                          面向T大学生，通过T大邮箱验证您的身份并提供服务。
+                          面向清北学生，目前支持@mails.tsinghua.edu.cn和@stu.pku.edu.cn的学生验证后交流。目前处于测试阶段。
                         </small>
                       </p>
                     </div>
