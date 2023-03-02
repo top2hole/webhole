@@ -16,6 +16,9 @@ import UAParser from 'ua-parser-js';
 
 const LOGIN_POPUP_ANCHOR_ID = 'pkuhelper_login_popup_anchor';
 
+const client_id = 'fd7f3b4e563c26dd37a3';
+const authorize_uri = 'https://github.com/login/oauth/authorize';
+
 class LoginPopupSelf extends Component {
   constructor(props) {
     super(props);
@@ -42,6 +45,15 @@ class LoginPopupSelf extends Component {
       this.popup_anchor.id = LOGIN_POPUP_ANCHOR_ID;
       document.body.appendChild(this.popup_anchor);
     }
+
+    const location = useLocation()
+    const params = new URLSearchParams(location.search)
+    if (params.get('code') != '') {
+      this.setState({
+        phase: 4,
+      })
+    }
+      
   }
 
   next_step() {
@@ -61,6 +73,9 @@ class LoginPopupSelf extends Component {
         break;
       case 3:
         this.need_recaptcha();
+        break;
+      case 4:
+        this.oauth_registration(this.props.token_callback);
         break;
     }
   }
@@ -107,6 +122,9 @@ class LoginPopupSelf extends Component {
     return password_hashed;
   }
 
+  oauth() {
+    location.href = `${authorize_uri}?client_id=${client_id}`;
+  }
   verify_email(version, failed_callback) {
     const old_token = new URL(location.href).searchParams.get('old_token');
     const email = this.ref.username.current.value;
@@ -302,6 +320,56 @@ class LoginPopupSelf extends Component {
     );
   }
 
+  async oauth_registration(set_token) {
+    if (this.valid_registration() !== 0) return;
+    const password = this.ref.password.current.value;
+    let code = getQuery('code');
+    let password_hashed = await this.hashpassword(password);
+    const device_info = UAParser(navigator.userAgent).browser.name;
+    const body = new URLSearchParams();
+    Object.entries({
+      code,
+      password_hashed,
+      device_type: 0,
+      device_info,
+    }).forEach((param) => body.append(...param));
+    this.setState(
+      {
+        loading_status: 'loading',
+      },
+      () => {
+        fetch(
+          API_ROOT + 'security/login/oauth?' + API_VERSION_PARAM(),
+          {
+            method: 'POST',
+            body,
+          },
+        )
+          .then(get_json)
+          .then((json) => {
+            if (json.code !== 0) {
+              if (json.msg) throw new Error(json.msg);
+              throw new Error(JSON.stringify(json));
+            }
+
+            set_token(json.token);
+            alert('登录成功');
+            this.setState({
+              loading_status: 'done',
+            });
+            this.props.on_close();
+          })
+          .catch((e) => {
+            console.error(e);
+            alert('登录失败\n' + e);
+            this.setState({
+              loading_status: 'done',
+            });
+          });
+      },
+    );
+  }
+
   need_recaptcha() {
     console.log(3);
   }
@@ -339,6 +407,18 @@ class LoginPopupSelf extends Component {
                     }
                   }}
                 />
+                <br/>
+                <a
+                  onKeyDown={
+                    (event) => {
+                      if (event.key == 'Click') {
+                        this.oauth();
+                      }
+                    }
+                  }
+                >
+                  使用github OAuth认证
+                </a>
               </label>
             </p>
             {this.state.phase === 0 && (
@@ -398,7 +478,14 @@ class LoginPopupSelf extends Component {
                 </p>
               </>
             )}
-            {(this.state.phase === 1 || this.state.phase === 2) && (
+            {this.state.phase === 4 && (
+              <>
+                <p>
+                  <b>{process.env.REACT_APP_TITLE} OAuth注册</b>
+                </p>
+              </>
+            )}
+            {(this.state.phase === 1 || this.state.phase === 2 || this.state.phase === 4) && (
               <>
                 <p>
                   <label>
