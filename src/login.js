@@ -323,7 +323,11 @@ class LoginPopupSelf extends Component {
   async oauth_registration(set_token) {
     if (this.valid_registration() !== 0) return;
     const password = this.ref.password.current.value;
-    let code = getQuery('code');
+
+    const location = useLocation()
+    const params = new URLSearchParams(location.search)
+
+    let code = params.get('code');
     let password_hashed = await this.hashpassword(password);
     const device_info = UAParser(navigator.userAgent).browser.name;
     const body = new URLSearchParams();
