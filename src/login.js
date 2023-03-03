@@ -22,12 +22,23 @@ const authorize_uri = 'https://github.com/login/oauth/authorize';
 class LoginPopupSelf extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      loading_status: 'idle',
-      recaptcha_verified: false,
-      phase: -1,
-      // excluded_scopes: [],
-    };
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code')
+    if (code == undefined) {
+      this.state = {
+        loading_status: 'idle',
+        recaptcha_verified: false,
+        phase: -1,
+        // excluded_scopes: [],
+      };
+    } else {
+      this.state = {
+        loading_status: 'idle',
+        recaptcha_verified: false,
+        phase: 4,
+        // excluded_scopes: [],
+      };
+    }
 
     this.ref = {
       username: React.createRef(),
@@ -44,13 +55,6 @@ class LoginPopupSelf extends Component {
       this.popup_anchor = document.createElement('div');
       this.popup_anchor.id = LOGIN_POPUP_ANCHOR_ID;
       document.body.appendChild(this.popup_anchor);
-    }
-
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('code') != '') {
-      this.setState({
-        phase: 4,
-      })
     }
       
   }
@@ -121,9 +125,6 @@ class LoginPopupSelf extends Component {
     return password_hashed;
   }
 
-  oauth() {
-    location.href = `${authorize_uri}?client_id=${client_id}`;
-  }
   verify_email(version, failed_callback) {
     const old_token = new URL(location.href).searchParams.get('old_token');
     const email = this.ref.username.current.value;
@@ -418,13 +419,7 @@ class LoginPopupSelf extends Component {
                 />
                 <br/>
                 <a
-                  onKeyDown={
-                    (event) => {
-                      if (event.key == 'Click') {
-                        this.oauth();
-                      }
-                    }
-                  }
+                  href={`${authorize_uri}?client_id=${client_id}`}
                 >
                   使用github OAuth认证
                 </a>
@@ -572,7 +567,13 @@ class LoginPopupSelf extends Component {
               >
                 下一步
               </button>
-              <button onClick={this.props.on_close}>取消</button>
+              <button onClick={
+                () => {
+                  var newURL = location.href.split("?")[0];
+                  window.history.pushState('object', document.title, newURL);
+                  this.props.on_close();  
+                }
+                }>取消</button>
             </p>
           </div>
         </div>
@@ -585,9 +586,17 @@ class LoginPopupSelf extends Component {
 export class LoginPopup extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      popup_show: false,
-    };
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code')
+    if (code == undefined) {
+      this.state = {
+        popup_show: false,
+      };
+    } else {
+      this.state = {
+        popup_show: true,
+      };
+    }
     this.on_popup_bound = this.on_popup.bind(this);
     this.on_close_bound = this.on_close.bind(this);
   }
