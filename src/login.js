@@ -46,8 +46,7 @@ class LoginPopupSelf extends Component {
       document.body.appendChild(this.popup_anchor);
     }
 
-    const location = useLocation()
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(window.location.search)
     if (params.get('code') != '') {
       this.setState({
         phase: 4,
@@ -324,8 +323,7 @@ class LoginPopupSelf extends Component {
     if (this.valid_registration() !== 0) return;
     const password = this.ref.password.current.value;
 
-    const location = useLocation()
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(window.location.search)
 
     let code = params.get('code');
     let password_hashed = await this.hashpassword(password);
@@ -358,6 +356,7 @@ class LoginPopupSelf extends Component {
 
             set_token(json.token);
             alert('登录成功');
+            alert_nonce(json.nonce);
             this.setState({
               loading_status: 'done',
             });
@@ -372,6 +371,12 @@ class LoginPopupSelf extends Component {
           });
       },
     );
+  }
+
+  alert_nonce(nonce) {
+    alert(`你的nonce是
+            ${nonce}
+           请妥善保管！`);
   }
 
   need_recaptcha() {
