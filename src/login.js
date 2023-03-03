@@ -357,7 +357,7 @@ class LoginPopupSelf extends Component {
 
             set_token(json.token);
             alert('登录成功');
-            alert_nonce(json.nonce);
+            this.alert_nonce(json.nonce);
             this.setState({
               loading_status: 'done',
             });
