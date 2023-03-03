@@ -139,6 +139,7 @@ class UnregisterPopupSelf extends Component {
             }
 
             alert('注销账户成功');
+            this.remove_params_in_url();
             this.setState({
               loading_status: 'done',
             });
@@ -147,12 +148,18 @@ class UnregisterPopupSelf extends Component {
           .catch((e) => {
             console.error(e);
             alert('失败\n' + e);
+            this.remove_params_in_url();
             this.setState({
               loading_status: 'done',
             });
           });
       },
     );
+  }
+
+  remove_params_in_url() {
+    var newURL = location.href.split("?")[0];
+    window.history.pushState('object', document.title, newURL);
   }
 
   need_recaptcha() {

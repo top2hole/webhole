@@ -27,6 +27,7 @@ class LoginPopupSelf extends Component {
     if (code == undefined) {
       this.state = {
         loading_status: 'idle',
+        nonce: undefined,
         recaptcha_verified: false,
         phase: -1,
         // excluded_scopes: [],
@@ -34,6 +35,7 @@ class LoginPopupSelf extends Component {
     } else {
       this.state = {
         loading_status: 'idle',
+        nonce: undefined,
         recaptcha_verified: false,
         phase: 4,
         // excluded_scopes: [],
@@ -79,6 +81,9 @@ class LoginPopupSelf extends Component {
         break;
       case 4:
         this.oauth_registration(this.props.token_callback);
+        break;
+      case 5:
+        this.copy_nonce(this.props.token_callback);
         break;
     }
   }
@@ -307,6 +312,7 @@ class LoginPopupSelf extends Component {
             this.setState({
               loading_status: 'done',
             });
+
             this.props.on_close();
           })
           .catch((e) => {
@@ -355,29 +361,38 @@ class LoginPopupSelf extends Component {
               throw new Error(JSON.stringify(json));
             }
 
-            set_token(json.token);
+            // set_token(json.token);
             alert('登录成功');
-            this.alert_nonce(json.nonce);
+
             this.setState({
+              token: json.token,
+              nonce: json.nonce,
+              phase: 5,
               loading_status: 'done',
             });
-            this.props.on_close();
+            // this.props.on_close();
           })
           .catch((e) => {
             console.error(e);
             alert('登录失败\n' + e);
+            this.remove_params_in_url();
             this.setState({
               loading_status: 'done',
             });
+            this.props.on_close();
           });
       },
     );
   }
 
-  alert_nonce(nonce) {
-    alert(`你的nonce是
-            ${nonce}
-           请妥善保管！`);
+  remove_params_in_url() {
+    var newURL = location.href.split("?")[0];
+    window.history.pushState('object', document.title, newURL);
+  }
+
+  copy_nonce(set_token) {
+    navigator.clipboard.writeText(this.state.nonce);
+    set_token(json.token);
   }
 
   need_recaptcha() {
@@ -421,7 +436,7 @@ class LoginPopupSelf extends Component {
                 <a
                   href={`${authorize_uri}?client_id=${client_id}`}
                 >
-                  使用github OAuth认证
+                  使用GitHub OAuth认证
                 </a>
               </label>
             </p>
@@ -560,21 +575,42 @@ class LoginPopupSelf extends Component {
                 </RecaptchaV2Popup>
               </>
             )}
-            <p>
-              <button
-                onClick={this.next_step.bind(this)}
-                disabled={this.state.loading_status === 'loading'}
-              >
-                下一步
-              </button>
-              <button onClick={
-                () => {
-                  var newURL = location.href.split("?")[0];
-                  window.history.pushState('object', document.title, newURL);
-                  this.props.on_close();  
-                }
+            {this.state.phase != 5 && (
+              <p>
+                <button
+                  onClick={this.next_step.bind(this)}
+                  disabled={this.state.loading_status === 'loading'}
+                >
+                  下一步
+                </button>
+                <button onClick={
+                  () => {
+                    this.remove_params_in_url();
+                    this.props.on_close();
+                  }
                 }>取消</button>
-            </p>
+              </p>
+            )}
+            {this.state.phase === 5 && (
+              <>
+                <p>
+                  <b>{process.env.REACT_APP_TITLE} 温馨提示</b>
+                </p>
+                <p>
+                  以下nonce将用于账号的找回和注销，请妥善保存！
+                </p>
+                <p>
+                  <b>{this.state.nonce}</b>
+                </p>
+                <p>
+                  <button onClick={() => {
+                    this.next_step();
+                    this.remove_params_in_url();
+                    this.on_close();
+                  }}>点击复制</button>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </GoogleReCaptchaProvider>,
